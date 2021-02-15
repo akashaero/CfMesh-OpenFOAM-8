@@ -1,0 +1,37 @@
+ifeq (Gcc,$(findstring Gcc,$(WM_COMPILER)))
+    OMP_FLAGS = -DUSE_OMP -fopenmp
+else
+    OMP_FLAGS =
+endif
+
+ifeq (OpenFOAM,$(findstring OpenFOAM,$(WM_PROJECT)))
+    ifeq (Int,$(findstring Int,$(WM_LABEL_OPTION)))
+        CFMESH_MACROS = -DNoSizeType
+        LIBS =
+    else
+        CFMESH_MACROS =
+        LIBS =
+    endif
+endif
+
+# Use the same macro for OpenFOAM.com and OpenFOAM.org
+CFMESH_MACROS += -DOpenCFDSpecific
+
+ifeq ($(WM_PROJECT), foam)
+    VER := $(shell expr `echo $(WM_PROJECT_VERSION)` \>= 3.2)
+    ifeq ($(VER), 1)
+        CFMESH_MACROS = -DExtendSpecific -std=c++11
+        LIBS = -lmeshTools -ledgeMesh
+    else
+        CFMESH_MACROS =
+    endif
+endif
+
+EXE_INC = \
+    $(OMP_FLAGS) $(CFMESH_MACROS) \
+    -I$(LIB_SRC)/triSurface/lnInclude \
+    -I$(LIB_SRC)/surfMesh/lnInclude \
+    -I$(LIB_SRC)/edgeMesh/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude
+
+LIB_LIBS = $(LIBS)
